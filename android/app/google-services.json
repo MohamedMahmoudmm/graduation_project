@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "748250438211",
+    "project_id": "helponroute",
+    "storage_bucket": "helponroute.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:748250438211:android:26fef470426d08abca52f6",
+        "android_client_info": {
+          "package_name": "com.example.help_on_route"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "748250438211-n72go9q0q6a8fshss16j8hve79l2hiot.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDI8-T4e1fUpB0TlvxkQW8KZhaKRHfoC1o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "748250438211-n72go9q0q6a8fshss16j8hve79l2hiot.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
