@@ -33,53 +33,55 @@ class VerificationScreen extends StatelessWidget {
               body: Center(
                 child: Padding(
                   padding: const EdgeInsets.only(top: 30,),
-                  child: Column(
-                    children:
-                    [
-                      CircleAvatar(
-                        radius: 95,
-                        backgroundColor: Colors.black87,
-                        child: Icon(Icons.mail_outline_outlined,size: 80,color: Colors.white,),
-                      ),
-                      SizedBox(height: 20,),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('Verification ',
-                            style: TextStyle(fontSize: 32,color: Colors.black87),),
-                          Text('Code',
-                            style: TextStyle(fontSize: 32,fontWeight: FontWeight.bold,color: Colors.black),),
-                        ],
-                      ),
-                      SizedBox(height: 20,),
-                      Text('Please type the verification code',style: TextStyle(fontSize: 20),),
-                      SizedBox(height: 20,),
-                      Pinput
-                        (onCompleted: (code)
-                      {
-                        print(code);
-                        HelperLoginCubit.get(context).submitOTP(code,name!,car!,context);
-
-                        //Navigator.of(context).push(MaterialPageRoute(builder: (context)=>MapScreen()));
-                      },
-                        length: 6,
-
-                        defaultPinTheme: PinTheme(
-                          width: 56,
-
-                          height: 56,
-                          textStyle: TextStyle(fontSize: 20,
-                              color: Color.fromRGBO(30, 60, 87, 1),
-                              fontWeight: FontWeight.w600),
-                          decoration: BoxDecoration(
-
-                            border: Border.all(color: Color.fromRGBO(234, 239, 243, 1)),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
+                  child:SingleChildScrollView(
+                    child: Column(
+                      children:
+                      [
+                        CircleAvatar(
+                          radius: 95,
+                          backgroundColor: Colors.black87,
+                          child: Icon(Icons.mail_outline_outlined,size: 80,color: Colors.white,),
                         ),
+                        SizedBox(height: 20,),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text('Verification ',
+                              style: TextStyle(fontSize: 32,color: Colors.black87),),
+                            Text('Code',
+                              style: TextStyle(fontSize: 32,fontWeight: FontWeight.bold,color: Colors.black),),
+                          ],
+                        ),
+                        SizedBox(height: 20,),
+                        Text('Please type the verification code',style: TextStyle(fontSize: 20),),
+                        SizedBox(height: 20,),
+                        Pinput
+                          (onCompleted: (code)
+                        {
+                          print(code);
+                          HelperLoginCubit.get(context).submitOTP(code,name!,car!,context);
 
-                      )
-                    ],
+                          //Navigator.of(context).push(MaterialPageRoute(builder: (context)=>MapScreen()));
+                        },
+                          length: 6,
+
+                          defaultPinTheme: PinTheme(
+                            width: 56,
+
+                            height: 56,
+                            textStyle: TextStyle(fontSize: 20,
+                                color: Color.fromRGBO(30, 60, 87, 1),
+                                fontWeight: FontWeight.w600),
+                            decoration: BoxDecoration(
+
+                              border: Border.all(color: Color.fromRGBO(234, 239, 243, 1)),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+
+                        )
+                      ],
+                    ),
                   ),
                 ),
               ),

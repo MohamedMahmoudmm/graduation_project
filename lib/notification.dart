@@ -14,19 +14,19 @@ class Notify
             id: Random().nextInt(100),
             channelKey: 'Help',
           locked: true,
-          title: 'heeeelp',
+          title: 'help',
           body: body,
         ),
 
       actionButtons: <NotificationActionButton>[
         NotificationActionButton(
             key: 'yes',
-            label: 'Yes',
+            label: 'Accept',
 
         ),
         NotificationActionButton(
             key: 'no',
-            label: 'No',
+            label: 'Disable',
           buttonType: ActionButtonType.DisabledAction,
           autoDismissible: true,
           //buttonType: ActionButtonType.DisabledAction,

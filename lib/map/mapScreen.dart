@@ -16,6 +16,7 @@ import 'package:help_on_route/map/request/requestScreen.dart';
 import 'package:help_on_route/model/requests_model/request_model.dart';
 import 'package:help_on_route/model/user_model/user_model.dart';
 import 'package:help_on_route/network/local/cache_helper.dart';
+import 'package:help_on_route/notification.dart';
 import 'package:help_on_route/shared/constant.dart';
 import 'package:help_on_route/shared/dio_helper.dart';
 import 'package:location/location.dart';
@@ -47,12 +48,13 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
     //Api().sendFcm('Helper', 'helper accept your request', 'e2352mXPReenwBJ01LvP8R:APA91bGEwaFnlsMDM4IdoWhtbgHoCZi3HqnHlgSl4CiDeHcZlWAb4_OM40VDqEeHE-0jofel7bxEpvomntWIZUCUWmh8rAgQG7ecYTYCNIBhaSyoIs16o7GPqDTvgmUgYnwOB5uc9oed');
      myReqUId=CacheHelper.getData(key: 'myRequest');
     requestData=CacheHelper.getData(key: 'myHelp');
     if(requestData !='')
       {
-        acceptReq();
+        acceptR();
       }
 
 
@@ -61,18 +63,19 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       print('ffffffffff :  ${event.buttonKeyPressed}');
       //print(event.)
 
+      // Timer(const Duration(seconds: 10), () {
+      //   AwesomeNotifications().dismiss(event.id!);
+      // });
+
+
+
       if (event.buttonKeyPressed == 'yes')
       {
-        CacheHelper.saveData(key: 'myHelp', value: requestData);
         print('000000000000000000000000000000000000000000');
         accept=true;
 
-        FirebaseFirestore.instance.collection('requests')
-            .doc(requestData).update({'accept':true});
-
         acceptReq();
       }
-
 
     });
     //getCurrentLocation();
@@ -83,8 +86,29 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   List<LatLng> polylineCoordinates = [];
  List<LatLng> polylineCoordinatesToHos = [];
   Completer<GoogleMapController> controllerM =Completer();
+  void acceptR()async
+  {
+
+    var request= await FirebaseFirestore.instance.collection('requests').doc(requestData).get();
+    number=UserModel.fromJson(request.data()!['patientData']).phone;
+
+    print('11111'+request.data()!['helpers'][0]['phone']);
+    accept=true;
+    if(request.data()!['distance']<10)
+    {
+      visible=true;
+      setState(() {});
+    }
+    var value=UserModel.fromJson(request.data()!['patientData']);
+
+    await getPolyPoints(value.lat!,value.long!);
+    // }).catchError((error){print('1111111111'+error.toString());});
+    print('ppppppppp1: ${polylineCoordinates.length}');
+  }
   void acceptReq()async
   {
+    /*
+     {
     var request= await FirebaseFirestore.instance.collection('requests').doc(requestData).get();
     number=UserModel.fromJson(request.data()!['patientData']).phone;
 
@@ -99,6 +123,57 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     await getPolyPoints(value.lat!,value.long!);
     // }).catchError((error){print('1111111111'+error.toString());});
     print('ppppppppp1: ${polylineCoordinates.length}');
+  }*/
+    var request= await FirebaseFirestore.instance.collection('requests').doc(requestData).get();
+    var helper= await FirebaseFirestore.instance.collection('users').doc(uId).get();
+
+    List<dynamic> list=request.data()!['helpers'];
+    //print(helper.data()!);
+    list.add(
+      UserModel(name: helper.data()!['name'],
+          deviceId: helper.data()!['deviceId'],
+          car: helper.data()!['car'],
+          lat: helper.data()!['lat'],
+          long: helper.data()!['long'],
+          phone: helper.data()!['phone'],
+          uId: helper.data()!['uId']).toMap()
+    );
+    print('listtttttt'+list.toString());
+    if(!request.data()!['accept'])
+      {
+        CacheHelper.saveData(key: 'myHelp', value: requestData);
+        FirebaseFirestore.instance.collection('requests')
+            .doc(requestData).update(
+            {
+              'accept':true,
+              'helpers':list
+            });
+        number=UserModel.fromJson(request.data()!['patientData']).phone;
+        accept=true;
+        if(request.data()!['distance']<20)
+        {
+          visible=true;
+          setState(() {});
+        }
+        var value=UserModel.fromJson(request.data()!['patientData']);
+        Api().sendFcm('Helper', 'helper accept your request', value.deviceId!);
+
+        await getPolyPoints(value.lat!,value.long!);
+        // }).catchError((error){print('1111111111'+error.toString());});
+        print('ppppppppp1: ${polylineCoordinates.length}');
+      }
+    else{
+      CacheHelper.saveData(key: 'Help', value: requestData);
+
+      FirebaseFirestore.instance.collection('requests')
+          .doc(requestData).update(
+          {
+            'helpers':list
+          });
+      Notify.instantNotify('there is helper went to help ,Wait till he finish ');
+    }
+
+
   }
  Future<void> getHosPolyPoints(double lat ,double long) async {
    Dio dio = new Dio();
@@ -149,7 +224,6 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
  }
 
-
  Future<void> getPolyPoints(double lat ,double long) async {
     print('from routeeeeee');
     Dio dio = new Dio();
@@ -161,6 +235,9 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
     var myLoc=await location.getLocation();
     Response response=await dio.get("https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${myLoc.latitude},${myLoc.longitude}&destinations=$lat,$long&key=AIzaSyCgws2nMUNNny_p0wUgAH2u9q2bcdScon8");
     hotime=response.data['rows'][0]['elements'][0]['duration']['text'];
+    hodis=double.parse((Geolocator.distanceBetween(myLoc.latitude!,
+        myLoc.longitude!, lat, long))
+        .toStringAsFixed(0));
     print(response.data['rows'][0]['elements'][0]['duration']['text']);
     print('bbb');
     // GoogleMapController googleMapController = await controllerM.future;
@@ -211,8 +288,23 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached ||
-         state == AppLifecycleState.paused)
-    {
+        state == AppLifecycleState.paused) {
+      // new request every 3 mins
+
+
+      var req=CacheHelper.getData(key: 'Help');
+
+      FirebaseFirestore.instance.collection('request').doc(req).get()
+      .then((value){
+
+      }).catchError((error){
+
+      });
+
+      Timer(Duration(seconds: 10), () {
+        print('2222');
+        print("Yeah, this line is printed after 10 seconds");
+      });
 
     }
     //   getCurrentLocation();
@@ -261,45 +353,6 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
       // service.start();
     }*/
   }
-  final Completer<GoogleMapController> _controller = Completer();
-  LocationData? currentLocation;
-  void getCurrentLocation() async {
-    Location location = Location();
-
-    location.onLocationChanged.listen(
-          (newLoc) {
-        print('555555444');
-
-        FirebaseFirestore.instance.collection('users').doc(uId).get().then((value) {
-          UserModel model=UserModel(name: value.data()!['name'],
-              car: value.data()!['car'],
-              lat: newLoc.latitude,
-              long: newLoc.longitude,
-              phone: value.data()!['phone'],
-              uId: uId, deviceId: value.data()!['deviceId']);
-          if(!value.data()!['car'] )
-            {
-              print('1111');
-              return;
-            }
-          FirebaseFirestore.instance.collection('users').doc(uId)
-              .update(model.toMap())
-              .then((value)
-          {
-            print('change: '+uId!);
-          })
-              .catchError((error){
-            print('noot');
-          });
-          setState((){});
-        },
-        );
-        });
-
-  }
-
-
-  FloatingSearchBarController barController=FloatingSearchBarController();
 
 
   @override
@@ -369,6 +422,8 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                   },
 
                     ),
+
+                    // patient is here text
                     Visibility(
                       visible: visible,
                       child: Align(
@@ -390,6 +445,8 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
+
+                    // clear request data button
                     Positioned(
                       top: 45,
                       right: 0,
@@ -408,18 +465,9 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                                CacheHelper.saveData(key: 'myRequest', value: '');
                                CacheHelper.saveData(key: 'myHelp', value: '');
                                polylineCoordinates=[];
+                               accept=false;
+
                                cubit.refresh();
-
-
-                              // Navigator.of(context).push(MaterialPageRoute(builder: (context)=>RequestScreen()));
-                              //
-                              //
-                              // setState(()
-                              // {
-                              //   myReqUId=CacheHelper.getData(key: 'myRequest');
-                              //
-                              // });
-
                             },
                             child: Text('tab to end request',
                               style: TextStyle(
@@ -430,6 +478,8 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
+
+                    //hospital route button
                     Positioned(
                       top: 140,
                       right: 0,
@@ -461,7 +511,8 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
-                    //hospital data
+
+                   // hospital route data and direction
                     Positioned(
                       top: 40,
                       left: 0,
@@ -479,12 +530,14 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                             children: [
                               Row(
                                 children: [
-                                  Text('Hospital name',style: TextStyle(color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                  fontSize: 18
+                                  Expanded(
+                                    child: Text('distanition name',style: TextStyle(color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                    fontSize: 18
+                                    ), overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
-                                  ),
-                                  Spacer(),
+                                 // Spacer(),
                                   Icon(Icons.location_on_outlined,color: Colors.white,size: 30,)
                                 ],
                               ),
@@ -535,7 +588,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(cubit.allUser.isNotEmpty?'The nearest Helper is ${cubit.dd}m away':'there is no helper near you',
+                              Text(cubit.allUser.isNotEmpty?'The nearest Helper is ${cubit.nearestHelperDis}m away':'there is no helper near you',
                                 style: TextStyle(
                                     color: Colors.black,
                                     fontSize: 22

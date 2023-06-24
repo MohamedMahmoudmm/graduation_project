@@ -21,8 +21,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async
   print("Handling a background message");
   print("Handling a background message");
   if(message.notification!.title !='Helper')
-  {requestData
-  =message.notification!.title;
+  {
+    requestData =message.notification!.title;
   }
   Notify.instantNotify(message.notification!.body!);
 

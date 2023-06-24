@@ -157,7 +157,7 @@ class MapCubit extends Cubit<MapsStates>
 
    }
 
-double? dd;
+double? nearestHelperDis;
   List<UserModel> allUser = [];
    Future<void> getUsers()async
    {
@@ -200,7 +200,7 @@ double? dd;
         }
       });
        if(allUser.isNotEmpty){
-        dd = double.parse((Geolocator.distanceBetween(position.latitude,
+         nearestHelperDis = double.parse((Geolocator.distanceBetween(position.latitude,
                 position.longitude, allUser[0].lat!, allUser[0].long!))
             .toStringAsFixed(0));
       }
@@ -332,29 +332,37 @@ double? dd;
 
   }
   void request()async{
+
    UserModel pModel;
     FirebaseFirestore.instance
         .collection('users')
         .doc(uId).get().then((value)async
     {
-      pModel=UserModel.fromJson(value.data()!);
 
+      pModel=UserModel.fromJson(value.data()!);
       double dis=double.parse(( Geolocator.distanceBetween(pModel.lat! , pModel.long!,
           allUser[0].lat! ,allUser[0].long!)).toStringAsFixed(0));
       print('dis= $dis');
       RequestModel model=RequestModel(
         accept: false,
         distance: dis,
-        patientData:pModel ,
-        helperData: allUser[0],
+        patientData:pModel,
+        helpers: [],
       );
        FirebaseFirestore.instance
           .collection('requests')
           .add(model.toMap()).then((value) {
+
             CacheHelper.saveData(key: 'myRequest', value: value.id);
             print('done');
 
              Api().sendFcm(value.id, '$dis', allUser[0].deviceId!);
+             allUser.forEach((element) {
+               double dis=double.parse(( Geolocator.distanceBetween(pModel.lat! , pModel.long!,
+                   element.lat! ,element.long!)).toStringAsFixed(0));
+               print('dis= $dis');
+               Api().sendFcm(value.id, '$dis', element.deviceId!);
+             });
             print('ffff');
             emit(SendRequest());
           }).catchError((error){
@@ -418,6 +426,8 @@ double? dd;
 
   }
 }
+
+
 
   // {
   //   DioHelper.postData(url: 'https://fcm.googleapis.com/fcm/send',
