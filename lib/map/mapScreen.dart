@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -85,7 +86,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
   }
   List<LatLng> polylineCoordinates = [];
  List<LatLng> polylineCoordinatesToHos = [];
-  Completer<GoogleMapController> controllerM =Completer();
+  Completer<GoogleMapController> controllerM =Completer<GoogleMapController>();
   void acceptR()async
   {
 
@@ -189,19 +190,19 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
        myLoc.longitude!, lat, long))
        .toStringAsFixed(0));
    print('bbb');
-   // GoogleMapController googleMapController = await controllerM.future;
-   // print('bbb');
-   // googleMapController.animateCamera(
-   //   CameraUpdate.newCameraPosition(
-   //     CameraPosition(
-   //       zoom: 13.5,
-   //       target: LatLng(
-   //         myLoc.latitude!,
-   //         myLoc.longitude!,
-   //       ),
-   //     ),
-   //   ),
-   // );
+   GoogleMapController googleMapController = await controllerM.future;
+   print('bbb');
+   googleMapController.animateCamera(
+     CameraUpdate.newCameraPosition(
+       CameraPosition(
+         zoom: 18,
+         target: LatLng(
+           myLoc.latitude!,
+           myLoc.longitude!,
+         ),
+       ),
+     ),
+   );
    print('bbbbbbbbbbbb');
    PolylinePoints polylinePoints = PolylinePoints();
    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
@@ -240,19 +241,19 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         .toStringAsFixed(0));
     print(response.data['rows'][0]['elements'][0]['duration']['text']);
     print('bbb');
-    // GoogleMapController googleMapController = await controllerM.future;
-    // print('bbb');
-    // googleMapController.animateCamera(
-    //   CameraUpdate.newCameraPosition(
-    //     CameraPosition(
-    //       zoom: 13.5,
-    //       target: LatLng(
-    //         myLoc.latitude!,
-    //         myLoc.longitude!,
-    //       ),
-    //     ),
-    //   ),
-    // );
+    GoogleMapController googleMapController = await controllerM.future;
+    print('bbb');
+    googleMapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          zoom: 18,
+          target: LatLng(
+            myLoc.latitude!,
+            myLoc.longitude!,
+          ),
+        ),
+      ),
+    );
     print('bbbbbbbbbbbb');
     PolylinePoints polylinePoints = PolylinePoints();
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
@@ -274,7 +275,6 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
 
   }
-
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -291,7 +291,6 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
         state == AppLifecycleState.paused) {
       // new request every 3 mins
 
-
       var req=CacheHelper.getData(key: 'Help');
 
       FirebaseFirestore.instance.collection('request').doc(req).get()
@@ -301,10 +300,10 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
       });
 
-      Timer(Duration(seconds: 10), () {
-        print('2222');
-        print("Yeah, this line is printed after 10 seconds");
-      });
+      // Timer(Duration(seconds: 10), () {
+      //   print('2222');
+      //   print("Yeah, this line is printed after 10 seconds");
+      // });
 
     }
     //   getCurrentLocation();
@@ -366,13 +365,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
           var cubit=MapCubit.get(context);
           return SafeArea(
             child: Scaffold(
-              // appBar: AppBar(
-              //   actions: [
-              //     IconButton(onPressed: (){
-              //       goToMyLocation();
-              //     }, icon:Icon(Icons.location_on) )
-              //   ],
-              // ),
+
                 body: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -402,6 +395,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                         cubit.getUsers();
                         cubit.addMarker();
 
+                        controllerM.complete(controller);
                         cubit.controllerM.complete(controller);
 
                       },
@@ -419,9 +413,11 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                       color: Colors.deepOrangeAccent,
                       width: 6,
                     ),
+
                   },
 
                     ),
+
 
                     // patient is here text
                     Visibility(
@@ -447,33 +443,43 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                     ),
 
                     // clear request data button
-                    Positioned(
-                      top: 45,
-                      right: 0,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0,),
-                        child: Container(
-                          height: 60,
-                          width:120,
-                          decoration: BoxDecoration(
-                              color: Colors.black,
-                              borderRadius: BorderRadius.circular(12)
-                          ),
+                    Visibility(
+                      visible:accept==false || requestData==''?false:true,
+                      child: Positioned(
+                        top: 45,
+                        right: 0,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10.0,),
+                          child: Container(
+                            height: 60,
+                            width:120,
+                            decoration: BoxDecoration(
+                                color: Colors.black,
+                                borderRadius: BorderRadius.circular(12)
+                            ),
 
-                          child: TextButton(
-                            onPressed: (){
-                               CacheHelper.saveData(key: 'myRequest', value: '');
-                               CacheHelper.saveData(key: 'myHelp', value: '');
-                               polylineCoordinates=[];
-                               accept=false;
-
-                               cubit.refresh();
-                            },
-                            child: Text('tab to end request',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20
-                              ),),
+                            child: TextButton(
+                              onPressed: (){
+                                 CacheHelper.saveData(key: 'myRequest', value: '');
+                                 CacheHelper.saveData(key: 'myHelp', value: '');
+                                 polylineCoordinates=[];
+                                 accept=false;
+                                 Fluttertoast.showToast(
+                                     msg: "Request cleared successfully",
+                                     toastLength: Toast.LENGTH_SHORT,
+                                     gravity: ToastGravity.CENTER,
+                                     backgroundColor: Colors.red,
+                                     textColor: Colors.white,
+                                     fontSize: 16.0
+                                 );
+                                 cubit.refresh();
+                              },
+                              child: Text('tab to end request',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20
+                                ),),
+                            ),
                           ),
                         ),
                       ),
@@ -481,7 +487,7 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
 
                     //hospital route button
                     Positioned(
-                      top: 140,
+                      top: accept==false || requestData==''?95:140,
                       right: 0,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0,),
@@ -575,6 +581,23 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                         ),
                       ),
                     ),
+                    Positioned(
+                      bottom: 182,
+                      right: 10,
+                      child: FloatingActionButton(
+                        backgroundColor: Colors.black,
+                      onPressed: ()async{
+                        final GoogleMapController controller = await controllerM.future;
+                        controller.animateCamera(CameraUpdate.newCameraPosition(
+                          CameraPosition(
+                            target: LatLng(cubit.position.latitude, cubit.position.longitude),
+                            zoom: 17.0,
+                          ),
+                        ));
+                      },
+
+                      child: Icon(Icons.my_location),
+                    ),),
 
                     Align(
                       alignment: Alignment.bottomCenter,
@@ -588,11 +611,14 @@ class _MapScreenState extends State<MapScreen> with WidgetsBindingObserver {
                             mainAxisSize: MainAxisSize.min,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Text(cubit.allUser.isNotEmpty?'The nearest Helper is ${cubit.nearestHelperDis}m away':'there is no helper near you',
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 22
-                                ),),
+                              Visibility(
+                                visible: !accept,
+                                child: Text(cubit.allUser.isNotEmpty?'The nearest Helper is ${cubit.nearestHelperDis}m away':'there is no helper near you',
+                                  style: TextStyle(
+                                      color: Colors.black,
+                                      fontSize: 22
+                                  ),),
+                              ),
                               SizedBox(height: 15,),
                               Padding(
                                 padding: const EdgeInsets.symmetric(horizontal: 30.0,),

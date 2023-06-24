@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:help_on_route/map/cubit/states.dart';
@@ -42,74 +43,11 @@ class MapCubit extends Cubit<MapsStates>
     final GoogleMapController controller=await controllerM.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(position1));
   }
-  LocationData? currentLocation;
-
-  void getCurrentLocation() async {
-    Location location = Location();
-    location.getLocation().then(
-          (location) {
-        currentLocation = location;
-
-      },
-    );
-    GoogleMapController googleMapController = await controllerM.future;
-    location.onLocationChanged.listen(
-          (newLoc) {
-        currentLocation = newLoc;
-        googleMapController.animateCamera(
-          CameraUpdate.newCameraPosition(
-            CameraPosition(
-              zoom: 13.5,
-              target: LatLng(
-                newLoc.latitude!,
-                newLoc.longitude!,
-              ),
-            ),
-          ),
-        );
-
-      },
-    );
-  }
 
   dynamic position;
-  LocationPermission? permission;
-
   var marker=HashSet<Marker>();
 
   List<LatLng> polylineCoordinates = [];
-  void getPolyPoints(UserModel model) async {
-    polylineCoordinates = [];
-    getLocation();
-    GoogleMapController googleMapController = await controllerM.future;
-    googleMapController.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(
-          zoom: 13.5,
-          target: LatLng(
-            position.latitude!,
-            position.longitude!,
-          ),
-        ),
-      ),
-    );
-    PolylinePoints polylinePoints = PolylinePoints();
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-      'AIzaSyBmlAAN57xXHaEV6FNYDty8c6JDl5ecw_k', // Your Google Map Key
-      PointLatLng(position.latitude,  position.longitude),
-      PointLatLng(model.lat!, model.long!),
-    );
-    if (result.points.isNotEmpty) {
-      result.points.forEach(
-            (PointLatLng point) => polylineCoordinates.add(
-          LatLng(point.latitude, point.longitude),
-        ),
-      );
-      //setState(() {});
-    }
-
-    emit(GetRoute());
-  }
 
   Future<void> getLocation()async
   {
@@ -217,30 +155,6 @@ double? nearestHelperDis;
   BitmapDescriptor sourceIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor destinationIcon = BitmapDescriptor.defaultMarker;
   BitmapDescriptor currentLocationIcon = BitmapDescriptor.defaultMarker;
-  void followUsers()
-   {
-  //
-  //   FirebaseFirestore.instance
-  //       .collection('users')
-  //       .doc(uId)
-  //       .collection('chats')
-  //       .doc(receiverId)
-  //       .collection('messages')
-  //       .orderBy('dateTime')
-  //       .snapshots()
-  //       .listen((event) {
-  //     messages = [];
-  //     event.docs.forEach((element) {
-  //       messages.add(ChatoMessageModel.fromJson(element.data()));
-  //     });
-  //
-  //     getLastMessage(receiverId: receiverId);
-  //     //print('222');
-  //     //lastMessages=messages[messages.length-1].text;
-  //     //print(lastMessages[]);
-  //     emit(ChatoGetMessageSuccessState());
-  //   });
-  }
   void setCustomMarkerIcon() {
     BitmapDescriptor.fromAssetImage(
         ImageConfiguration.empty, "assets/Pin_source.png")
@@ -316,9 +230,7 @@ double? nearestHelperDis;
           title: element.uId,
           onTap: ()
           {
-            getDistence(element);
-            getPolyPoints(element);
-            //print(element["id"]);
+
           },
         ),
         //icon: BitmapDescriptor.
@@ -354,6 +266,14 @@ double? nearestHelperDis;
           .add(model.toMap()).then((value) {
 
             CacheHelper.saveData(key: 'myRequest', value: value.id);
+            Fluttertoast.showToast(
+                msg: "Request send successfully",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.CENTER,
+                backgroundColor: Colors.green,
+                textColor: Colors.white,
+                fontSize: 16.0
+            );
             print('done');
 
              Api().sendFcm(value.id, '$dis', allUser[0].deviceId!);
